@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,51 +35,54 @@ const (
 
 var goURL string = "https://go.dev/dl/go1.22.3.%s-%s.%s"
 
-// Initializes the required folder/files required for the project to work.
-func init() {
+// Start creates the required folders and files for the project to work,
+// and downloads the latest Go version based on the host's operating system.
+func Start() error {
     home, err := os.UserHomeDir()
     if err != nil {
-        // TODO: log don't panic
-        panic(err)
+        return err
     }
 
-    err = os.Mkdir(filepath.Join(home, APP_DIR), os.ModePerm)
+    rootDir := filepath.Join(home, APP_DIR)
+    err = os.Mkdir(rootDir, os.ModePerm)
     if err != nil && !errors.Is(err, fs.ErrExist) {
-        // TODO: log don't panic
-        panic(err)
+        return err
     }
 
-    file, err := os.Create(filepath.Join(home, APP_DIR, LOG_FILE))
+    file, err := os.Create(filepath.Join(rootDir, LOG_FILE))
     if err != nil {
-        // TODO: log don't panic
-        panic(err)
+        return err
     }
-    defer file.Close()
 
-    _, err = os.Stat(filepath.Join(home, APP_DIR, GO_DIR))
+    defer func() error {
+        return file.Close()
+    }()
+
+    _, err = os.Stat(filepath.Join(rootDir, GO_DIR))
     if os.IsNotExist(err) {
         ext := "tar.gz"
         if runtime.GOOS == "windows" { ext = "zip" }
 
         resp, err := http.Get(fmt.Sprintf(goURL, runtime.GOOS, runtime.GOARCH, ext))
         if err != nil {
-            // TODO: log don't panic
-            panic(err)
+            return err
         }
 
-        if runtime.GOOS == "windows" {
-            // TODO: Implement unzip functionallity for windows
-            return
-        }
-
-        err = untar(resp.Body, filepath.Join(home, APP_DIR))
-        if err != nil {
-            // TODO: log don't panic
-            panic(err)
+        if err := Uncompress(resp.Body, rootDir, runtime.GOOS); err != nil {
+            return err
         }
     }
+
+    return nil
 }
 
 func main() {
-    fmt.Println("Hello from Gopa!")
+    log := slog.New(
+        slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+    if err := Start(); err != nil {
+        log.Error("Start()", "error", err)
+    }
+
+    log.Debug("Successfully started application")
 }
