@@ -29,7 +29,7 @@ func Uncompress(reader io.ReadCloser, target, os string) error {
 
 // Extracts the data from a .zip file to the specified target directory.
 func unzip(reader io.ReadCloser, target string) error {
-    var buf *bytes.Buffer
+    buf := bytes.NewBuffer([]byte{})
     size, err := io.Copy(buf, reader)
     if err != nil {
         return err
@@ -47,14 +47,17 @@ func unzip(reader io.ReadCloser, target string) error {
             return errors.New("invalid file path")
         }
     
-        info := file.FileInfo()
-        if info.IsDir() {
-            if err := os.MkdirAll(path, info.Mode()); err != nil { return err }
+        if file.FileInfo().IsDir() {
+            if err := os.MkdirAll(path, os.ModePerm); err != nil { return err }
             continue
         }
 
+        if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+            return err
+        }
+
         dstFile, err := os.OpenFile(
-            path, os.O_CREATE | os.O_TRUNC | os.O_RDWR, info.Mode())
+            path, os.O_CREATE | os.O_TRUNC | os.O_RDWR, file.Mode())
         if err != nil {
             return err
         }
