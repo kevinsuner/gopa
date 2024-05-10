@@ -19,7 +19,7 @@ import (
 /*
 
 Primary objectives
-- [ ] Application initialization (log file and golang installation)
+- [x] Application initialization (log file and golang installation)
 - [ ] Save debug, info, warn and error logs to log file depending on the LOG_LEVEL
     - [ ] Integration test: Initialize the desired directories and create logs with different LOG_LEVEL's
 - [ ] Make the terminal display a textbox where the user can input text
@@ -33,7 +33,19 @@ const (
     GO_DIR      string = "go"
 )
 
-var goURL string = "https://go.dev/dl/go1.22.3.%s-%s.%s"
+var (
+    // Human-readable logging levels mapped to their slog.Level representation.
+    logLevels = map[string]slog.Level{
+        "":         slog.LevelInfo, // default logging level
+        "debug":    slog.LevelDebug,
+        "info":     slog.LevelInfo,
+        "warn":     slog.LevelWarn,
+        "error":    slog.LevelError,
+    }
+
+    // Format string to download latest Golang version based on OS and ARCH.
+    goURL = "https://go.dev/dl/go1.22.3.%s-%s.%s"
+)
 
 // Start creates the required folders and files for the project to work,
 // and downloads the latest Go version based on the host's operating system.
@@ -78,10 +90,14 @@ func Start() error {
 
 func main() {
     log := slog.New(
-        slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+        slog.NewTextHandler(
+            os.Stdout,
+            &slog.HandlerOptions{Level: logLevels[os.Getenv("LOG_LEVEL")]},
+        ),
+    )
 
     if err := Start(); err != nil {
-        log.Error("Start()", "error", err)
+        panic(err)
     }
 
     log.Debug("Successfully started application")
