@@ -49,21 +49,21 @@ var (
 
 // Start creates the required folders and files for the project to work,
 // and downloads the latest Go version based on the host's operating system.
-func Start() error {
+func Start() (string, error) {
     home, err := os.UserHomeDir()
     if err != nil {
-        return err
+        return "", err
     }
 
     rootDir := filepath.Join(home, APP_DIR)
     err = os.Mkdir(rootDir, os.ModePerm)
     if err != nil && !errors.Is(err, fs.ErrExist) {
-        return err
+        return "", err
     }
 
     file, err := os.Create(filepath.Join(rootDir, LOG_FILE))
     if err != nil {
-        return err
+        return "", err
     }
 
     defer func() error {
@@ -77,28 +77,36 @@ func Start() error {
 
         resp, err := http.Get(fmt.Sprintf(goURL, runtime.GOOS, runtime.GOARCH, ext))
         if err != nil {
-            return err
+            return "", err
         }
 
         if err := Uncompress(resp.Body, rootDir, runtime.GOOS); err != nil {
-            return err
+            return "", err
         }
     }
 
-    return nil
+    return rootDir, nil
 }
 
 func main() {
-    log := slog.New(
+    rootDir, err := Start()
+    if err != nil {
+        panic(err)
+    }
+
+    file, err := os.OpenFile(
+        filepath.Join(rootDir, LOG_FILE), os.O_APPEND | os.O_WRONLY, os.ModePerm)
+    if err != nil {
+        panic(err)
+    }
+    defer file.Close()
+
+    logger := slog.New(
         slog.NewTextHandler(
-            os.Stdout,
+            file,
             &slog.HandlerOptions{Level: logLevels[os.Getenv("LOG_LEVEL")]},
         ),
     )
 
-    if err := Start(); err != nil {
-        panic(err)
-    }
-
-    log.Debug("Successfully started application")
+    logger.Debug("Successfully started application")
 }
