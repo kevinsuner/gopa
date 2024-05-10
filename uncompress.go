@@ -61,19 +61,13 @@ func unzip(reader io.ReadCloser, target string) error {
         if err != nil {
             return err
         }
-
-        defer func() error {
-            return dstFile.Close()
-        }()
+        defer dstFile.Close()
 
         srcFile, err := file.Open()
         if err != nil {
             return err
         }
-
-        defer func() error {
-            return srcFile.Close()
-        }()
+        defer srcFile.Close()
 
         if _, err := io.Copy(dstFile, srcFile); err != nil {
             return err
@@ -114,10 +108,7 @@ func untar(reader io.ReadCloser, target string) error {
         if err != nil {
             return err
         }
-        
-        defer func() error {
-            return file.Close()
-        }()
+        defer file.Close()
 
         _, err = io.Copy(file, tarReader)
         if err != nil {
