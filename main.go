@@ -33,13 +33,18 @@ var logLevels = map[string]slog.Level{
 }
 
 func main() {
-    rootDir, err := Init()
+    path, err := os.UserHomeDir()
+    if err != nil {
+        panic(err)
+    }
+
+    basepath, err := Init(path)
     if err != nil {
         panic(err)
     }
 
     file, err := os.OpenFile(
-        filepath.Join(rootDir, LOG_FILE), os.O_APPEND | os.O_WRONLY, os.ModePerm)
+        filepath.Join(basepath, LOG_FILE), os.O_APPEND | os.O_WRONLY, os.ModePerm)
     if err != nil {
         panic(err)
     }
