@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+    tea "github.com/charmbracelet/bubbletea"
 )
 
 /*
@@ -30,9 +32,9 @@ panel data, quit the program
 */
 
 const (
-    APP_DIR_NAME    string = ".gopa"
-    GO_DIR_NAME     string = "go"
-    LOG_FILE_NAME   string = "gopa.log"
+    gopaDir     string = ".gopa"
+    goDir       string = "go"
+    logFile     string = "gopa.log"
 )
 
 var (
@@ -59,7 +61,7 @@ func init() {
         os.Exit(1)
     }
 
-    appDir = filepath.Join(homeDir, APP_DIR_NAME)
+    appDir = filepath.Join(homeDir, gopaDir)
 
     err = os.Mkdir(appDir, os.ModePerm)
     if err != nil && !errors.Is(err, fs.ErrExist) {
@@ -67,14 +69,14 @@ func init() {
         os.Exit(1)
     }
 
-    file, err := os.Create(filepath.Join(appDir, LOG_FILE_NAME))
+    file, err := os.Create(filepath.Join(appDir, logFile))
     if err != nil {
         slog.Error("os.Create", "error", err.Error())
         os.Exit(1)
     }
     defer file.Close()
 
-    _, err = os.Stat(filepath.Join(appDir, GO_DIR_NAME))
+    _, err = os.Stat(filepath.Join(appDir, goDir))
     if os.IsNotExist(err) {
         ext := "tar.gz"
         if runtime.GOOS == "windows" { ext = "zip" }
@@ -94,9 +96,10 @@ func init() {
 
 func main() {
     file, err := os.OpenFile(
-        filepath.Join(appDir, LOG_FILE_NAME), os.O_APPEND | os.O_WRONLY, os.ModePerm)
+        filepath.Join(appDir, logFile), os.O_APPEND | os.O_WRONLY, os.ModePerm)
     if err != nil {
-        panic(err)
+        slog.Error("os.OpenFile", "error", err.Error())
+        os.Exit(1)
     }
     defer file.Close()
 
@@ -107,5 +110,10 @@ func main() {
         ),
     )
 
-    logger.Debug("Successfully started application")
+    logger.Debug("Successfully started the application")
+
+    if _, err := tea.NewProgram(newPlayground(), tea.WithAltScreen()).Run(); err != nil {
+        logger.Error("tea.NewProgram", "error", err.Error())
+        os.Exit(1)
+    }
 }
