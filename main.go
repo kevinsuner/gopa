@@ -18,19 +18,6 @@ import (
     tea "github.com/charmbracelet/bubbletea"
 )
 
-/*
-
-Objectives (11 May 2024)
-- [x] Application initialization (log file and golang installation)
-- [x] Save debug, info, warn and error logs to log file depending on the LOG_LEVEL
-- [ ] Make the terminal display a textbox where the user can input text
-    - [ ] Integration test: Initialize the program, write to the textbox, check the textbox input and quit the program
-- [ ] Make a panel to the right-side of the textbox, that echoes the content of the textbox on <CTRL-Enter>
-    - [ ] Integration test: Initialize the program, write to the textbox, press <CTRL-Enter>, match textbox data against
-panel data, quit the program
-
-*/
-
 const (
     gopaDir     string = ".gopa"
     goDir       string = "go"
