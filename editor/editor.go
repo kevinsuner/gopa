@@ -17,9 +17,7 @@ var styles = map[string]lipgloss.Style{
     "cursor": lipgloss.NewStyle().Foreground(colors.Gray),
     "placeholder-focus": lipgloss.NewStyle().Foreground(colors.Gray),
     "placeholder-blur": lipgloss.NewStyle().Foreground(colors.Gray),
-    "cursorline-focus": lipgloss.NewStyle().Background(colors.Background).Foreground(colors.Gray),
-    "base-focus": lipgloss.NewStyle().Border(lipgloss.HiddenBorder()),
-    "base-blur": lipgloss.NewStyle().Border(lipgloss.HiddenBorder()),
+    "cursorline-focus": lipgloss.NewStyle().Background(lipgloss.NoColor{}).Foreground(lipgloss.NoColor{}),
     "end-of-buffer": lipgloss.NewStyle().Foreground(colors.Gray),
 }
 
@@ -33,8 +31,6 @@ func New() textarea.Model {
     ta.FocusedStyle.Placeholder = styles["placeholder-focus"]
     ta.BlurredStyle.Placeholder = styles["placeholder-blur"]
     ta.FocusedStyle.CursorLine = styles["cursorline-focus"]
-    ta.FocusedStyle.Base = styles["base-focus"]
-    ta.BlurredStyle.Base = styles["base-blur"]
     ta.FocusedStyle.EndOfBuffer = styles["end-of-buffer"]
     ta.BlurredStyle.EndOfBuffer = styles["end-of-buffer"]
 
