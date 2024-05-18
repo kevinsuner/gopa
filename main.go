@@ -1,9 +1,14 @@
 package main
 
 import (
+	"os"
+	"os/exec"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
+
+// Think of switching UIs as an array of UIs ui[0]
 
 type playground struct {
     editor *tview.TextArea
@@ -43,7 +48,12 @@ func newEditor(console *tview.TextView) *tview.TextArea {
     
     editor.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         if event.Key() == tcell.KeyCtrlR {
-            console.SetText(editor.GetText())
+            out, err := runCode(editor.GetText())
+            if err != nil {
+                panic(err)
+            }
+            
+            console.SetText(out)
             return nil
         }
 
@@ -52,6 +62,29 @@ func newEditor(console *tview.TextView) *tview.TextArea {
 
     editor.SetTitle("Editor").SetBorder(true)
     return editor
+}
+
+func runCode(input string) (string, error) {
+    file, err := createTempFile()
+    if err != nil {
+        return "", err
+    }
+
+    defer file.Close()
+    defer os.Remove(file.Name())
+
+    _, err = file.WriteString(input)
+    if err != nil {
+        return "", err
+    }
+
+    cmd := exec.Command("go", "run", file.Name())
+    out, _ := cmd.CombinedOutput()
+    return string(out), nil
+}
+
+func createTempFile() (*os.File, error) {
+    return os.CreateTemp("./", "tempfile-*.go")
 }
 
 func newMenu() *tview.Box {
