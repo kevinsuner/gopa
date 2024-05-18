@@ -1,14 +1,106 @@
+/*
+* SPDX-License-Identifier: GPL-3.0-only
+* Copyright (C) 2024 Kevin Suñer <ksuner@pm.me>
+ */
+
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"log/slog"
+	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-// Think of switching UIs as an array of UIs ui[0]
+// Ideas
+// - Think of switching UIs as an array of UIs ui[0]
+
+const (
+    appDirname  string = ".gopa"
+    goDirname   string = "go"
+    logFilename string = "gopa.log"
+)
+
+var (
+    rootDir string
+    goURL   string = "https://go.dev"
+)
+
+func init() {
+    home, err := os.UserHomeDir()
+    if err != nil {
+        slog.Error("os.UserHomeDir", "error", err.Error())
+        os.Exit(1)
+    }
+
+    rootDir = filepath.Join(home, appDirname)
+    err = os.Mkdir(rootDir, os.ModePerm)
+    if err != nil && !errors.Is(err, fs.ErrExist) {
+        slog.Error("os.Mkdir", "error", err.Error())
+        os.Exit(1)
+    }
+
+    file, err := os.Create(filepath.Join(rootDir, logFilename))
+    if err != nil {
+        slog.Error("os.Create", "error", err.Error())
+        os.Exit(1)
+    }
+    defer file.Close()
+
+    _, err = os.Stat(filepath.Join(rootDir, goDirname))
+    if os.IsNotExist(err) {
+        ext := "tar.gz"
+        if runtime.GOOS == "windows" { ext = "zip" }
+
+        version, err := getLatestGoVersion()
+        if err != nil {
+            slog.Error("getLatestGoVersion", "error", err.Error())
+            os.Exit(1)
+        }
+
+        resp, err := http.Get(
+            fmt.Sprintf("%s/dl/%s.%s-%s.%s", goURL, version, runtime.GOOS, runtime.GOARCH, ext))
+        if err != nil {
+            slog.Error("http.Get", "error", err.Error())
+            os.Exit(1)
+        }
+
+        if err := Uncompress(resp.Body, rootDir, runtime.GOOS); err != nil {
+            slog.Error("Uncompress", "error", err.Error())
+            os.Exit(1)
+        }
+    }
+}
+
+func getLatestGoVersion() (string, error) {
+    resp, err := http.Get(fmt.Sprintf("%s/VERSION?m=text", goURL))
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return "", errors.New("unexpected status code")
+    }
+
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+
+    return strings.Split(string(body), "\n")[0], nil
+}
+
 
 type playground struct {
     editor *tview.TextArea
@@ -78,13 +170,18 @@ func runCode(input string) (string, error) {
         return "", err
     }
 
-    cmd := exec.Command("go", "run", file.Name())
+    goExec := "bin/go"
+    if runtime.GOOS == "windows" { goExec = "bin/go.exe" }
+
+    cmd := exec.Command(filepath.Join(rootDir, goDirname, goExec), "run", file.Name())
+    cmd.Dir = rootDir  
     out, _ := cmd.CombinedOutput()
+
     return string(out), nil
 }
 
 func createTempFile() (*os.File, error) {
-    return os.CreateTemp("./", "tempfile-*.go")
+    return os.CreateTemp(rootDir, "gopa-*.go")
 }
 
 func newMenu() *tview.Box {
