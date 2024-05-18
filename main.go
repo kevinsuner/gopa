@@ -27,7 +27,7 @@ import (
 
 const (
     appDirname  string = ".gopa"
-    goDirname   string = "go"
+    gosDirname   string = "gos"
     logFilename string = "gopa.log"
 )
 
@@ -57,28 +57,53 @@ func init() {
     }
     defer file.Close()
 
-    _, err = os.Stat(filepath.Join(rootDir, goDirname))
+    version, err := getLatestGoVersion()
+    if err != nil {
+        slog.Error("getLatestGoVersion", "error", err.Error())
+        os.Exit(1)
+    }
+
+    _, err = os.Stat(filepath.Join(rootDir, gosDirname))
+    if os.IsNotExist(err) {
+        err = os.Mkdir(filepath.Join(rootDir, gosDirname), os.ModePerm)
+        if err != nil {
+            slog.Error("os.Stat", "error", err.Error())
+            os.Exit(1)
+        }
+    }
+
+    longVersion := fmt.Sprintf("%s.%s-%s", version, runtime.GOOS, runtime.GOARCH)
+    _, err = os.Stat(filepath.Join(rootDir, gosDirname, longVersion))
     if os.IsNotExist(err) {
         ext := "tar.gz"
         if runtime.GOOS == "windows" { ext = "zip" }
 
-        version, err := getLatestGoVersion()
-        if err != nil {
-            slog.Error("getLatestGoVersion", "error", err.Error())
-            os.Exit(1)
-        }
-
         resp, err := http.Get(
-            fmt.Sprintf("%s/dl/%s.%s-%s.%s", goURL, version, runtime.GOOS, runtime.GOARCH, ext))
+            fmt.Sprintf("%s/dl/%s.%s", goURL, longVersion, ext))
         if err != nil {
             slog.Error("http.Get", "error", err.Error())
             os.Exit(1)
         }
 
-        if err := Uncompress(resp.Body, rootDir, runtime.GOOS); err != nil {
+        err = Uncompress(
+            resp.Body, filepath.Join(rootDir, gosDirname), runtime.GOOS)
+        if err != nil {
             slog.Error("Uncompress", "error", err.Error())
             os.Exit(1)
         }
+
+        err = os.Rename(
+            filepath.Join(rootDir, gosDirname, "go"),
+            filepath.Join(rootDir, gosDirname, longVersion))
+        if err != nil {
+            slog.Error("os.Rename", "error", err.Error())
+            os.Exit(1)
+        }
+    }
+
+    if err := os.Setenv("GOPA_GO_VERSION", longVersion); err != nil {
+        slog.Error("os.Setenv", "error", err.Error())
+        os.Exit(1)
     }
 }
 
@@ -170,10 +195,11 @@ func runCode(input string) (string, error) {
         return "", err
     }
 
-    goExec := "bin/go"
-    if runtime.GOOS == "windows" { goExec = "bin/go.exe" }
+    goExec := filepath.Join(os.Getenv("GOPA_GO_VERSION"), "bin", "go")
+    if runtime.GOOS == "windows" {
+        goExec = filepath.Join(os.Getenv("GOPA_GO_VERSION"), "bin", "go.exe") }
 
-    cmd := exec.Command(filepath.Join(rootDir, goDirname, goExec), "run", file.Name())
+    cmd := exec.Command(filepath.Join(rootDir, gosDirname, goExec), "run", file.Name())
     cmd.Dir = rootDir  
     out, _ := cmd.CombinedOutput()
 
