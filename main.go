@@ -137,24 +137,23 @@ type playground struct {
     editor *tview.TextArea
     console *tview.TextView
     menu *tview.Box
+    modal *tview.Modal
     flex *tview.Flex
 }
 
-func newPlayground() playground {
+func newPlayground(app *tview.Application) playground {
     console := newConsole()
     editor := newEditor(console)
     menu := newMenu()
+    flex := newFlex(editor, console, menu)
+    modal := newModal(app, flex)
 
     return playground{
         editor: editor,
         console: console,
         menu: menu,
-        flex: tview.NewFlex().
-            AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-                AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
-                    AddItem(editor, 0, 1, false).
-                    AddItem(console, 0, 1, false), 0, 1, false).
-                AddItem(menu, 5, 1, false), 0, 1, false),
+        modal: modal,
+        flex: flex,
     }
 }
 
@@ -220,9 +219,36 @@ func newMenu() *tview.Box {
     return tview.NewBox().SetBorder(true)
 }
 
+func newFlex(editor *tview.TextArea, console *tview.TextView, menu *tview.Box) *tview.Flex {
+    return tview.NewFlex().
+        AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+            AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
+                AddItem(editor, 0, 1, false).
+                AddItem(console, 0, 1, false), 0, 1, false).
+            AddItem(menu, 5, 1, false), 0, 1, false)
+}
+
+func newModal(app *tview.Application, flex *tview.Flex) *tview.Modal {
+    return tview.NewModal().
+        SetText("Test modal").
+        AddButtons([]string{"Quit", "Cancel"}).
+        SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+            if buttonLabel == "Quit" { app.SetRoot(flex, true) }
+        })
+}
+
 func main() {
     app := tview.NewApplication()
-    playground := newPlayground()
+    playground := newPlayground(app)
+
+    app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+        if event.Key() == tcell.KeyCtrlD {
+            app.SetRoot(playground.modal, true)        
+        }
+
+        return event
+    })
+
     if err := app.SetRoot(playground.flex, true).EnableMouse(true).EnablePaste(true).Run(); err != nil {
         panic(err)
     }
