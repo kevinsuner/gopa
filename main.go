@@ -78,25 +78,8 @@ func init() {
         ext := "tar.gz"
         if runtime.GOOS == "windows" { ext = "zip" }
 
-        resp, err := http.Get(
-            fmt.Sprintf("%s/dl/%s.%s", goURL, longVersion, ext))
-        if err != nil {
-            slog.Error("http.Get", "error", err.Error())
-            os.Exit(1)
-        }
-
-        err = Uncompress(
-            resp.Body, filepath.Join(rootDir, gosDirname), runtime.GOOS)
-        if err != nil {
-            slog.Error("Uncompress", "error", err.Error())
-            os.Exit(1)
-        }
-
-        err = os.Rename(
-            filepath.Join(rootDir, gosDirname, "go"),
-            filepath.Join(rootDir, gosDirname, longVersion))
-        if err != nil {
-            slog.Error("os.Rename", "error", err.Error())
+        if err := downloadGoVersion(longVersion, ext); err != nil {
+            slog.Error("downloadGoVersion", "error", err.Error())
             os.Exit(1)
         }
     }
@@ -126,6 +109,29 @@ func getLatestGoVersion() (string, error) {
     return strings.Split(string(body), "\n")[0], nil
 }
 
+func downloadGoVersion(version, ext string) error {
+    resp, err := http.Get(
+        fmt.Sprintf("%s/dl/%s.%s", goURL, version, ext))
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    err = Uncompress(
+        resp.Body, filepath.Join(rootDir, gosDirname), runtime.GOOS)
+    if err != nil {
+        return err
+    }
+
+    err = os.Rename(
+        filepath.Join(rootDir, gosDirname, "go"),
+        filepath.Join(rootDir, gosDirname, version))
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
 
 type playground struct {
     editor *tview.TextArea
