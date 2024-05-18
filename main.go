@@ -15,11 +15,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"golang.org/x/mod/semver"
 )
 
 // Ideas
@@ -110,25 +114,33 @@ func getLatestGoVersion() (string, error) {
 }
 
 func downloadGoVersion(version, ext string) error {
-    resp, err := http.Get(
-        fmt.Sprintf("%s/dl/%s.%s", goURL, version, ext))
-    if err != nil {
-        return err
-    }
-    defer resp.Body.Close()
+    _, err := os.Stat(filepath.Join(rootDir, gosDirname, version))
+    if os.IsNotExist(err) {
+        resp, err := http.Get(
+            fmt.Sprintf("%s/dl/%s.%s", goURL, version, ext))
+        if err != nil {
+            return err
+        }
+        defer resp.Body.Close()
 
-    err = Uncompress(
-        resp.Body, filepath.Join(rootDir, gosDirname), runtime.GOOS)
-    if err != nil {
-        return err
+        if resp.StatusCode != http.StatusOK {
+            return errors.New("unexpected status code")
+        }
+
+        err = Uncompress(
+            resp.Body, filepath.Join(rootDir, gosDirname), runtime.GOOS)
+        if err != nil {
+            return err
+        }
+
+        err = os.Rename(
+            filepath.Join(rootDir, gosDirname, "go"),
+            filepath.Join(rootDir, gosDirname, version))
+        if err != nil {
+            return err
+        }        
     }
 
-    err = os.Rename(
-        filepath.Join(rootDir, gosDirname, "go"),
-        filepath.Join(rootDir, gosDirname, version))
-    if err != nil {
-        return err
-    }
 
     return nil
 }
@@ -137,7 +149,7 @@ type playground struct {
     editor *tview.TextArea
     console *tview.TextView
     menu *tview.Box
-    modal *tview.Modal
+    list *tview.List
     flex *tview.Flex
 }
 
@@ -146,13 +158,13 @@ func newPlayground(app *tview.Application) playground {
     editor := newEditor(console)
     menu := newMenu()
     flex := newFlex(editor, console, menu)
-    modal := newModal(app, flex)
+    list := newList(app, flex)
 
     return playground{
         editor: editor,
         console: console,
         menu: menu,
-        modal: modal,
+        list: list,
         flex: flex,
     }
 }
@@ -228,13 +240,58 @@ func newFlex(editor *tview.TextArea, console *tview.TextView, menu *tview.Box) *
             AddItem(menu, 5, 1, false), 0, 1, false)
 }
 
-func newModal(app *tview.Application, flex *tview.Flex) *tview.Modal {
-    return tview.NewModal().
-        SetText("Test modal").
-        AddButtons([]string{"Quit", "Cancel"}).
-        SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-            if buttonLabel == "Quit" { app.SetRoot(flex, true) }
-        })
+func newList(app *tview.Application, flex *tview.Flex) *tview.List {
+    list := tview.NewList()
+    list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+        if event.Key() == tcell.KeyEsc {
+            app.SetRoot(flex, true)
+            return nil
+        }
+
+        return event
+    })
+    
+    return list
+}
+
+func listGoVersions() ([]string, error) {
+    resp, err := http.Get(fmt.Sprintf("%s/dl", goURL))
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return nil, errors.New("unexpected status code")
+    }
+
+    doc, err := goquery.NewDocumentFromReader(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    rawVersions := make([]string, 0)
+    doc.Find(".toggleButton").Each(func(i int, s *goquery.Selection) {
+        version := s.Find("span").Text()
+
+        // Match versions from go1.16+ ahead and replace the leading "go"
+		// prefix for a "v" prefix to sort it using the semver package
+		r := regexp.MustCompile(`^go(\d+)\.(1[6-9]|[2-9]\d+)(?:\.(\d+))?$`)
+		if r.MatchString(version) {
+			rawVersions = append(rawVersions, strings.Replace(version, "go", "v", 1))
+		}
+    })
+
+    rawVersions = slices.Compact(rawVersions)
+    semver.Sort(rawVersions)
+    slices.Reverse(rawVersions)
+
+    versions := make([]string, 0)
+    for _, rawVersion := range rawVersions {
+        versions = append(versions, strings.Replace(rawVersion, "v", "go", 1))
+    }
+    
+    return versions, nil
 }
 
 func main() {
@@ -242,8 +299,41 @@ func main() {
     playground := newPlayground(app)
 
     app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-        if event.Key() == tcell.KeyCtrlD {
-            app.SetRoot(playground.modal, true)        
+        if event.Key() == tcell.KeyCtrlL {
+            // cache this please
+            versions, err := listGoVersions()
+            if err != nil {
+                slog.Error("listGoVersions", "error", err.Error())
+                os.Exit(1)
+            }
+
+            for _, version := range versions {
+                playground.list.AddItem(
+                    version,
+                    fmt.Sprintf("Go version %s", strings.Replace(version, "go", "", 1)),
+                    '\n',
+                    func() {
+                        ext := "tar.gz"
+                        if runtime.GOOS == "windows" { ext = "zip" }
+
+                        longVersion := fmt.Sprintf("%s.%s-%s", version, runtime.GOOS, runtime.GOARCH)
+                        err := downloadGoVersion(longVersion, ext)
+                        if err != nil {
+                            slog.Error("downloadGoVersion", "error", err.Error())
+                            os.Exit(1)
+                        }
+
+                        if err := os.Setenv("GOPA_GO_VERSION", longVersion); err != nil {
+                            slog.Error("os.Setenv", "error", err.Error())
+                            os.Exit(1)
+                        }
+
+                        app.SetRoot(playground.flex, true)
+                    },
+                )
+            }
+
+            app.SetRoot(playground.list, true)        
         }
 
         return event
