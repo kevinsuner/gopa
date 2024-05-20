@@ -17,9 +17,9 @@ import (
 	"strings"
 )
 
-// Uncompress reads a stream of data, and determines how to uncompress it based
+// uncompress reads a stream of data, and determines how to uncompress it based
 // on the operating system passed in the function arguments.
-func Uncompress(reader io.ReadCloser, target, os string) error {
+func uncompress(reader io.ReadCloser, target, os string) error {
     if os == "windows" {
         return unzip(reader, target)
     }
@@ -83,10 +83,7 @@ func untar(reader io.ReadCloser, target string) error {
     if err != nil {
         return err
     }
-    
-    defer func() error {
-        return gzipReader.Close()
-    }()
+    defer gzipReader.Close()
 
     tarReader := tar.NewReader(gzipReader)
     for {
