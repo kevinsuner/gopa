@@ -83,11 +83,11 @@ func main() {
     }
 
     playground := newPlayground(tview.NewApplication())
+    playground.layout = playground.newLayout()
     playground.editor = playground.newEditor()
     playground.console = playground.newConsole()
     playground.menu = playground.newMenu()
     playground.versionsList = playground.newVersionsList()
-    playground.layout = playground.newLayout()
 
     playground.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         if event.Key() == tcell.KeyCtrlL {

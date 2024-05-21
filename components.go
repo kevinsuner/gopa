@@ -15,20 +15,20 @@ import (
 
 type playground struct {
     app             *tview.Application
+    layout          *tview.Flex
     editor          *tview.TextArea
     console         *tview.TextView
     menu            *tview.Box
-    layout          *tview.Flex
     versionsList    *tview.List
 }
 
 func newPlayground(app *tview.Application) playground {
     return playground{
         app:            app,
+        layout:         tview.NewFlex(),
         editor:         tview.NewTextArea(),
         console:        tview.NewTextView(),
         menu:           tview.NewBox(),
-        layout:         tview.NewFlex(),
         versionsList:   tview.NewList(),
     }
 }
