@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -26,13 +27,14 @@ func cacheGoVersions() ([]string, error) {
             return nil, err
         }
 
-        _, err = file.WriteString(time.Now().Format(time.DateOnly))
+        _, err = file.WriteString(
+            fmt.Sprintf("%s\n", time.Now().Format(time.DateOnly)))
         if err != nil {
             return nil, err
         }
 
         for _, version := range versions {
-            _, err := file.WriteString(version)
+            _, err := file.WriteString(fmt.Sprintf("%s\n", version))
             if err != nil {
                 return nil, err
             }
@@ -61,12 +63,13 @@ func cacheGoVersions() ([]string, error) {
                 return nil, err
             }
 
-            now, err := time.Parse(time.DateOnly, time.Now().String())
+            now, err := time.Parse(time.DateOnly, time.Now().Format(time.DateOnly))
             if err != nil {
                 return nil, err
             }
 
             if timestamp.Before(now) { expired = true; break }
+            idx++
         }
 
         versions = append(versions, scanner.Text())
@@ -81,13 +84,14 @@ func cacheGoVersions() ([]string, error) {
         file.Truncate(0)
         file.Seek(0, 0)
 
-        _, err = file.WriteString(time.Now().Format(time.DateOnly))
+        _, err = file.WriteString(
+            fmt.Sprintf("%s\n", time.Now().Format(time.DateOnly)))
         if err != nil {
             return nil, err
         }
 
         for _, version := range versions {
-            _, err := file.WriteString(version)
+            _, err := file.WriteString(fmt.Sprintf("%s\n", version))
             if err != nil {
                 return nil, err
             }
