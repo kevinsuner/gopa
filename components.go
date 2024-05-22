@@ -43,33 +43,34 @@ func (p playground) newLayout() *tview.Flex {
     return p.layout
 }
 
-func (p playground) newEditor() *tview.TextArea {
+func (p playground) extendEditor() *tview.TextArea {
+    // Colors
     p.editor.SetBackgroundColor(tcell.ColorDefault)
-    p.editor.SetBorderColor(tcell.Color246)
-    p.editor.SetTitleColor(tcell.Color246)
-    p.editor.SetPlaceholderStyle(
-        p.editor.GetPlaceholderStyle().Background(tcell.ColorDefault))
-    p.editor.SetPlaceholderStyle(
-        p.editor.GetPlaceholderStyle().Foreground(tcell.Color246))
-    p.editor.SetTextStyle(
-        p.editor.GetTextStyle().Background(tcell.ColorDefault))
+    p.editor.SetBorderColor(tcell.Color245)
+    p.editor.SetTitleColor(tcell.Color245)
+    p.editor.SetTextStyle(p.editor.GetTextStyle().Background(tcell.ColorDefault))
+    p.editor.SetTextStyle(p.editor.GetTextStyle().Foreground(tcell.Color223))
+    p.editor.SetFocusFunc(func() {
+        p.editor.SetBorderColor(tcell.Color223)
+        p.editor.SetTextStyle(p.editor.GetTextStyle().Foreground(tcell.Color223))
+        p.editor.SetTitleColor(tcell.Color223)})
+    p.editor.SetBlurFunc(func() {
+        p.editor.SetBorderColor(tcell.Color245)
+        p.editor.SetTextStyle(p.editor.GetTextStyle().Foreground(tcell.Color245))
+        p.editor.SetTitleColor(tcell.Color245)})
+
+    // Defaults
     p.editor.SetWrap(false)
     p.editor.SetBorder(true)
     p.editor.SetTitle("Editor")
-    p.editor.SetPlaceholder("Type some code here...")
-    p.editor.SetFocusFunc(func() {
-        p.editor.SetBorderColor(tcell.Color208)
-        p.editor.SetTitleColor(tcell.Color208)
-    })
-    p.editor.SetBlurFunc(func() {
-        p.editor.SetBorderColor(tcell.Color246)
-        p.editor.SetTitleColor(tcell.Color246)
-    })
+    p.editor.SetTitleAlign(tview.AlignRight)
+
+    // Commands
     p.editor.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         if event.Key() == tcell.KeyCtrlR {
             out, err := runCode(p.editor.GetText())
             if err != nil {
-                slog.Error("RunCode", "error", err.Error())
+                slog.Error("runCode", "error", err.Error())
                 os.Exit(1)
             }
 
@@ -83,31 +84,40 @@ func (p playground) newEditor() *tview.TextArea {
     return p.editor
 }
 
-func (p playground) newConsole() *tview.TextView {
+func (p playground) extendConsole() *tview.TextView {
+    // Colors
     p.console.SetBackgroundColor(tcell.ColorDefault)
-    p.console.SetBorderColor(tcell.Color246)
-    p.console.SetTitleColor(tcell.Color246)
+    p.console.SetBorderColor(tcell.Color245)
+    p.console.SetTitleColor(tcell.Color245)
+    p.console.SetTextColor(tcell.Color245)
+    p.console.SetFocusFunc(func() {
+        p.console.SetBorderColor(tcell.Color223)
+        p.console.SetTextColor(tcell.Color223)
+        p.console.SetTitleColor(tcell.Color223)})
+    p.console.SetBlurFunc(func() {
+        p.console.SetBorderColor(tcell.Color245)
+        p.console.SetTextColor(tcell.Color245)
+        p.console.SetTitleColor(tcell.Color245)})
+
+    // Defaults
     p.console.SetBorder(true)
     p.console.SetWordWrap(true)
     p.console.SetTitle("Console")
-    p.console.SetFocusFunc(func() {
-        p.console.SetBorderColor(tcell.Color208)
-        p.console.SetTitleColor(tcell.Color208)
-    })
-    p.console.SetBlurFunc(func() {
-        p.console.SetBorderColor(tcell.Color246)
-        p.console.SetTitleColor(tcell.Color246)
-    })
+    p.console.SetTitleAlign(tview.AlignRight)
 
     return p.console
 }
 
-func (p playground) newMenu() *tview.TextView {
+func (p playground) extendMenu() *tview.TextView {
+    // Colors
     p.menu.SetBackgroundColor(tcell.ColorDefault)
-    p.menu.SetBorderColor(tcell.Color208)
-    p.menu.SetTextColor(tcell.Color208)
+    p.menu.SetBorderColor(tcell.Color223)
+    p.menu.SetTextColor(tcell.Color223)
+
+    // Defaults
     p.menu.SetBorder(true)
-    p.menu.SetText("Run code (Ctrl-R) | Go version (Ctrl-L)")
+    p.menu.SetDisabled(true)
+    p.menu.SetText(" Run code (Ctrl-R) | Go version (Ctrl-L)")
 
     return p.menu
 }
