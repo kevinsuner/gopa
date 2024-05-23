@@ -125,7 +125,20 @@ func (p playground) extendMenu() *tview.TextView {
     return p.menu
 }
 
-func (p playground) newVersionsList() *tview.List {
+func (p playground) extendVersionsList() *tview.List {
+    // Colors
+    p.versionsList.SetBackgroundColor(tcell.ColorDefault)
+    p.versionsList.SetMainTextColor(tcell.Color223)
+    p.versionsList.SetMainTextStyle(tcell.StyleDefault.Background(tcell.ColorDefault))
+    p.versionsList.SetShortcutStyle(tcell.StyleDefault.Background(tcell.ColorDefault))
+    p.versionsList.SetShortcutColor(tcell.Color66)
+    p.versionsList.SetSelectedBackgroundColor(tcell.Color66)
+    p.versionsList.SetSelectedTextColor(tcell.Color223)
+
+    // Defaults
+    p.versionsList.ShowSecondaryText(false)
+
+    // Commands
     p.versionsList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         if event.Key() == tcell.KeyEsc {
             p.app.SetRoot(p.layout, true)
