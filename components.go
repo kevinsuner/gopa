@@ -13,6 +13,9 @@ import (
 	"github.com/rivo/tview"
 )
 
+var menuText string = `
+[:#458588][#ebdbb2][::b] GOPA [-:-:-:-] Run code [:#ebdbb2][#282828][::b] ^R [-:-:-:-] Go version [:#ebdbb2][#282828][::b] ^L [-:-:-:-]`
+
 type playground struct {
     app             *tview.Application
     layout          *tview.Flex
@@ -111,13 +114,13 @@ func (p playground) extendConsole() *tview.TextView {
 func (p playground) extendMenu() *tview.TextView {
     // Colors
     p.menu.SetBackgroundColor(tcell.ColorDefault)
-    p.menu.SetBorderColor(tcell.Color223)
     p.menu.SetTextColor(tcell.Color223)
 
     // Defaults
-    p.menu.SetBorder(true)
-    p.menu.SetDisabled(true)
-    p.menu.SetText(" Run code (Ctrl-R) | Go version (Ctrl-L)")
+    p.menu.SetBorder(false)
+    p.menu.SetDynamicColors(true)
+    p.menu.SetText(menuText)
+    p.menu.SetTextAlign(tview.AlignCenter)
 
     return p.menu
 }
