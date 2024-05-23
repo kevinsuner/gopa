@@ -69,7 +69,7 @@ func cacheGoVersions() ([]string, error) {
             }
 
             if timestamp.Before(now) { expired = true; break }
-            idx++
+            idx++; continue
         }
 
         versions = append(versions, scanner.Text())
