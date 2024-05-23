@@ -36,7 +36,7 @@ func newPlayground(app *tview.Application) playground {
     }
 }
 
-func (p playground) newLayout() *tview.Flex {
+func (p playground) extendLayout() *tview.Flex {
     p.layout.AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
         AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
             AddItem(p.editor, 0, 1, false).

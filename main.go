@@ -83,7 +83,7 @@ func main() {
     }
 
     playground := newPlayground(tview.NewApplication())
-    playground.layout = playground.newLayout()
+    playground.layout = playground.extendLayout()
     playground.editor = playground.extendEditor()
     playground.console = playground.extendConsole()
     playground.menu = playground.extendMenu()
