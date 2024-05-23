@@ -14,7 +14,7 @@ import (
 )
 
 var menuText string = `
-[:#458588][#ebdbb2][::b] GOPA [-:-:-:-] Run code [:#ebdbb2][#282828][::b] ^R [-:-:-:-] Go version [:#ebdbb2][#282828][::b] ^L [-:-:-:-]`
+[:#458588][#ebdbb2][::b] GOPA [-:-:-:-] Run code [:#ebdbb2][#282828][::b] ^R [-:-:-:-] Go version [:#ebdbb2][#282828][::b] ^L [-:-:-:-] Quit [:#ebdbb2][#282828][::b] ^C [-:-:-:-]`
 
 type playground struct {
     app             *tview.Application
