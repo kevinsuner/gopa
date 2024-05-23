@@ -87,7 +87,7 @@ func main() {
     playground.editor = playground.extendEditor()
     playground.console = playground.extendConsole()
     playground.menu = playground.extendMenu()
-    playground.versionsList = playground.newVersionsList()
+    playground.versionsList = playground.extendVersionsList()
 
     playground.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
         if event.Key() == tcell.KeyCtrlL {
