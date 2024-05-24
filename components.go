@@ -14,7 +14,9 @@ import (
 )
 
 var menuText string = `
-[:#458588][#ebdbb2][::b] GOPA [-:-:-:-] Run code [:#ebdbb2][#282828][::b] ^R [-:-:-:-] Go version [:#ebdbb2][#282828][::b] ^L [-:-:-:-] Quit [:#ebdbb2][#282828][::b] ^C [-:-:-:-]`
+[:#458588][#ebdbb2][::b] GOPA [-:-:-:-]
+
+[:#ebdbb2][#282828][::b] ^R [-:-:-:-] Run code [:#ebdbb2][#282828][::b] ^L [-:-:-:-] Go version [:#ebdbb2][#282828][::b] ^C [-:-:-:-] Quit`
 
 type playground struct {
     app             *tview.Application
@@ -41,7 +43,7 @@ func (p playground) extendLayout() *tview.Flex {
         AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
             AddItem(p.editor, 0, 1, false).
             AddItem(p.console, 0, 1, false), 0, 1, false).
-        AddItem(p.menu, 3, 1, false), 0, 1, false)
+        AddItem(p.menu, 5, 1, false), 0, 1, false)
 
     return p.layout
 }
