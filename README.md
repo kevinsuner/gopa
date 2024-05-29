@@ -1,4 +1,9 @@
-# Gopa
+<p align="center">
+  <img src="./logo.png" alt="Gopa logotype" title="Gopa logotype"/>
+</p>
+
+<h1 align="center">Gopa</h1>
+<br/>
 
 Gopa is a free (as in speech) and open-source cross-platform playground for the
 Go programming language, that allows you to experiment, prototype and get
@@ -6,7 +11,8 @@ instant feedback without disrupting your workflow. It provides support for runni
 Go versions from 1.16+ and is designed to live in your terminal, like the rest of
 the tools you already love and use.
 
-[Download the latest version](https://github.com/kevinsuner/gopa/releases/tag/)
+[Download the latest version](https://github.com/kevinsuner/gopa/releases/tag/1.0.0)
+[Watch the showcase video](https://www.youtube.com/watch?v=jEX4gRLvmYs)
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/kevinsuner/gopa)](https://github.com/kevinsuner/gopa/blob/master/go.mod)
 [![License](https://img.shields.io/github/license/kevinsuner/gopa)](https://github.com/kevinsuner/gopa/blob/master/LICENSE)
@@ -14,7 +20,7 @@ the tools you already love and use.
 ---
 
 <p align="center">
-    <kbd><img src="./gopa.png" alt="Gopa screenshot" title="Gopa screenshot"/></kbd>
+    <kbd><img src="./screenshot.png" alt="Gopa screenshot" title="Gopa screenshot"/></kbd>
 </p>
 
 ---
@@ -59,3 +65,6 @@ Gopa makes use of a variety of open-source projects including:
 - [github.com/PuerkitoBio/goquery](https://github.com/PuerkitoBio/goquery)
 - [github.com/golang/mod](https://github.com/golang/mod)
 
+### Logotype
+
+Gopa's Gopher © 2024 by Paola Peñanco is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1)
