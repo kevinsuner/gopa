@@ -12,6 +12,7 @@ Go versions from 1.16+ and is designed to live in your terminal, like the rest o
 the tools you already love and use.
 
 [Download the latest version](https://github.com/kevinsuner/gopa/releases/tag/1.0.0)
+
 [Watch the showcase video](https://www.youtube.com/watch?v=jEX4gRLvmYs)
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/kevinsuner/gopa)](https://github.com/kevinsuner/gopa/blob/master/go.mod)
